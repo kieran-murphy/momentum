@@ -1,0 +1,64 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Light mode (default) */
+:root {
+  --color-paper: #F2F1EA;
+  --color-surface: #FBFAF6;
+  --color-ink: #20241C;
+  --color-muted: #6B6A5E;
+  --color-line: #E1DFD3;
+  --color-work: #3E5C8A;
+  --color-work-soft: #DCE4F0;
+  --color-life: #6B7F4F;
+  --color-life-soft: #E4EADB;
+  --color-gold: #E8B23D;
+  color-scheme: light;
+}
+
+/* Dark mode */
+html.dark {
+  --color-paper: #1A1916;
+  --color-surface: #2A2620;
+  --color-ink: #F5F4F0;
+  --color-muted: #A8A396;
+  --color-line: #3F3A32;
+  --color-work: #5B7FA8;
+  --color-work-soft: #1E2E42;
+  --color-life: #7F956B;
+  --color-life-soft: #252D1F;
+  --color-gold: #D4A538;
+  color-scheme: dark;
+}
+
+html {
+  color-scheme: light;
+}
+
+body {
+  background-color: var(--color-paper);
+  color: var(--color-ink);
+  transition: background-color 0.3s, color 0.3s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+::selection {
+  background-color: var(--color-gold);
+  color: var(--color-ink);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-ink);
+  outline-offset: 2px;
+  border-radius: 2px;
+}

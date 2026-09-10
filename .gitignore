@@ -1,0 +1,11 @@
+node_modules
+.next
+out
+.DS_Store
+*.local
+*.tsbuildinfo
+
+# Local editor/tooling config, not app code
+.impeccable/
+.claude/skills/
+.cursor/
