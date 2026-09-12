@@ -1,17 +1,19 @@
 import { Group, Task } from "./types";
-import { dayKey, daysAgo, startOfWeek } from "./date";
+import { dayKey, daysAgo, endOfWeek, startOfDay, startOfWeek } from "./date";
 
 export type DayCell = {
   date: Date;
   key: string;
   countsByGroup: Record<string, number>;
   total: number;
+  // False for padding days outside the requested range (an adjacent month's
+  // days when viewing a single month, or the extra days used to complete a
+  // calendar week at either end of a rolling range) — the UI renders these
+  // as non-interactive filler so real weeks stay properly aligned.
+  inRange: boolean;
 };
 
-export function buildHeatmap(tasks: Task[], groups: Group[], weeks = 12): DayCell[] {
-  const days: DayCell[] = [];
-  const totalDays = weeks * 7;
-
+function countsByDay(tasks: Task[]): Map<string, Record<string, number>> {
   const byDay = new Map<string, Record<string, number>>();
   for (const t of tasks) {
     if (!t.completedAt) continue;
@@ -20,33 +22,83 @@ export function buildHeatmap(tasks: Task[], groups: Group[], weeks = 12): DayCel
     entry[t.groupId] = (entry[t.groupId] ?? 0) + 1;
     byDay.set(k, entry);
   }
-
-  const start = daysAgo(totalDays - 1);
-  for (let i = 0; i < totalDays; i++) {
-    const d = new Date(start);
-    d.setDate(d.getDate() + i);
-    const k = dayKey(d);
-    const countsByGroup = byDay.get(k) ?? {};
-    const total = Object.values(countsByGroup).reduce((a, b) => a + b, 0);
-    days.push({ date: d, key: k, countsByGroup, total });
-  }
-  return days;
+  return byDay;
 }
 
-export function cellGradient(cell: DayCell, groups: Group[]): string {
-  if (cell.total === 0) return "#E1DFD3";
-  const parts: string[] = [];
-  let acc = 0;
-  for (const g of groups) {
-    const count = cell.countsByGroup[g.id] ?? 0;
-    if (count === 0) continue;
-    const slice = (count / cell.total) * 360;
-    parts.push(`${g.color} ${acc}deg ${acc + slice}deg`);
-    acc += slice;
+function buildDayCells(byDay: Map<string, Record<string, number>>, gridStart: Date, gridEnd: Date, isInRange: (d: Date) => boolean): DayCell[] {
+  const cells: DayCell[] = [];
+  const cursor = new Date(gridStart);
+  while (cursor <= gridEnd) {
+    const k = dayKey(cursor);
+    const countsByGroup = byDay.get(k) ?? {};
+    const total = Object.values(countsByGroup).reduce((a, b) => a + b, 0);
+    cells.push({
+      date: new Date(cursor),
+      key: k,
+      countsByGroup,
+      total,
+      inRange: isInRange(cursor),
+    });
+    cursor.setDate(cursor.getDate() + 1);
   }
-  if (parts.length === 0) return "#E1DFD3";
-  if (parts.length === 1) return parts[0].split(" ")[0];
-  return `conic-gradient(${parts.join(", ")})`;
+  return cells;
+}
+
+// Builds a calendar-grid view of a single month: the target month's days,
+// padded at both ends to complete whole weeks (Sun-Sat), so columns line up
+// as real calendar weeks.
+export function buildMonthHeatmap(tasks: Task[], groups: Group[], monthStart: Date): DayCell[] {
+  const month = monthStart.getMonth();
+  const firstOfMonth = new Date(monthStart.getFullYear(), month, 1);
+  const lastOfMonth = new Date(monthStart.getFullYear(), month + 1, 0);
+  return buildDayCells(countsByDay(tasks), startOfWeek(firstOfMonth), endOfWeek(lastOfMonth), (d) => d.getMonth() === month);
+}
+
+// Builds a rolling window of the last `days` days, inclusive of today.
+// `days` should be a multiple of 7 — with no remainder to pad away, the
+// window divides evenly into whole weeks on its own, so today always lands
+// as the very last cell instead of being trailed by blank filler.
+export function buildRecentHeatmap(tasks: Task[], groups: Group[], days: number): DayCell[] {
+  const rangeEnd = startOfDay(new Date());
+  const rangeStart = daysAgo(days - 1);
+  return buildDayCells(countsByDay(tasks), rangeStart, rangeEnd, () => true);
+}
+
+export type MonthOption = { key: string; label: string; start: Date };
+
+// Months selectable in the heatmap's month picker: the current month, plus
+// every earlier month that has at least one completed task, so the list
+// stays short instead of listing years of empty history.
+export function listMonthOptions(tasks: Task[]): MonthOption[] {
+  const now = new Date();
+  const currentStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
+  let earliest = currentStart;
+  for (const t of tasks) {
+    if (!t.completedAt) continue;
+    const d = new Date(t.completedAt);
+    const monthStart = new Date(d.getFullYear(), d.getMonth(), 1);
+    if (monthStart < earliest) earliest = monthStart;
+  }
+
+  const options: MonthOption[] = [];
+  const cursor = new Date(currentStart);
+  while (cursor >= earliest) {
+    options.push({
+      key: `${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, "0")}`,
+      label: cursor.toLocaleDateString(undefined, { month: "long", year: "numeric" }),
+      start: new Date(cursor),
+    });
+    cursor.setMonth(cursor.getMonth() - 1);
+  }
+  return options;
+}
+
+// A day's cell is a flat intensity color rather than a per-group split —
+// the click-to-expand breakdown is where per-group detail actually lives.
+// Uses CSS custom properties (not hardcoded hex) so it adapts in dark mode.
+export function cellColor(cell: DayCell): string {
+  return cell.total === 0 ? "var(--color-line)" : "var(--color-gold)";
 }
 
 export function currentStreak(tasks: Task[]): number {
@@ -77,12 +129,4 @@ export function recapStats(tasks: Task[]) {
   const streak = currentStreak(tasks);
 
   return { today, thisWeek, allTime, streak };
-}
-
-export function groupBreakdown(tasks: Task[], groups: Group[]) {
-  const completed = tasks.filter((t) => t.completedAt);
-  return groups.map((g) => ({
-    group: g,
-    count: completed.filter((t) => t.groupId === g.id).length,
-  }));
 }

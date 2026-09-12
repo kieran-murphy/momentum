@@ -115,6 +115,18 @@ export function useTaskStore() {
     setGroups((prev) => prev.map((g) => (g.id === id ? { ...g, name: trimmed } : g)));
   }, []);
 
+  const moveGroup = useCallback((id: string, direction: "up" | "down") => {
+    setGroups((prev) => {
+      const index = prev.findIndex((g) => g.id === id);
+      if (index === -1) return prev;
+      const target = direction === "up" ? index - 1 : index + 1;
+      if (target < 0 || target >= prev.length) return prev;
+      const next = [...prev];
+      [next[index], next[target]] = [next[target], next[index]];
+      return next;
+    });
+  }, []);
+
   const deleteGroup = useCallback((id: string) => {
     setGroups((prev) => {
       if (prev.length <= 1) return prev;
@@ -140,6 +152,7 @@ export function useTaskStore() {
     reorderTasks,
     addGroup,
     renameGroup,
+    moveGroup,
     deleteGroup,
   };
 }

@@ -1,5 +1,12 @@
 export function dayKey(d: Date): string {
-  return d.toISOString().slice(0, 10); // YYYY-MM-DD
+  // Local calendar date, not UTC — using toISOString() here would convert
+  // through UTC first, so anything completed in the evening in a timezone
+  // behind UTC (all of the Americas, for instance) would get miscounted as
+  // the next day, one that's often not even rendered yet.
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
 }
 
 export function startOfDay(d: Date): Date {
@@ -25,6 +32,17 @@ export function startOfWeek(d: Date): Date {
   return copy;
 }
 
+export function endOfWeek(d: Date): Date {
+  const copy = startOfDay(d);
+  const day = copy.getDay(); // 0 = Sunday
+  copy.setDate(copy.getDate() + (6 - day));
+  return copy;
+}
+
 export function formatDayLabel(d: Date): string {
   return d.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
+}
+
+export function weekdayLabel(d: Date): string {
+  return d.toLocaleDateString(undefined, { weekday: "short" });
 }

@@ -87,7 +87,7 @@ export default function TaskList({
     <div className="flex flex-col gap-5">
       <GroupTabs groups={groups} activeId={filter} onSelect={setFilter} />
 
-      <AddTask groups={groups} activeGroupId={filter} onAdd={addTask} />
+      <AddTask activeGroupId={filter} onAdd={addTask} />
 
       {visible.length > 0 && (
         <div className="flex justify-end">

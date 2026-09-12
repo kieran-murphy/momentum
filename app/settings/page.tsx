@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useTaskStore } from "@/lib/useTaskStore";
 
 export default function SettingsPage() {
-  const { tasks, groups, hydrated, addGroup, renameGroup, deleteGroup } = useTaskStore();
+  const { tasks, groups, hydrated, addGroup, renameGroup, moveGroup, deleteGroup } = useTaskStore();
   const [name, setName] = useState("");
   const [isFocused, setIsFocused] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -54,13 +54,35 @@ export default function SettingsPage() {
       <div className="flex flex-col gap-2 rounded-xl border border-line bg-surface p-4 animate-card-entrance dark:border-line dark:bg-surface">
         <h2 className="font-body text-sm font-medium text-ink dark:text-ink">Groups</h2>
         <ul className="flex flex-col gap-2">
-          {groups.map((g) => {
+          {groups.map((g, i) => {
             const count = tasks.filter((t) => t.groupId === g.id).length;
             return (
               <li
                 key={g.id}
                 className="group flex items-center gap-3 rounded-lg border border-line px-3 py-2.5 dark:border-line"
               >
+                <div className="flex shrink-0 flex-col">
+                  <button
+                    onClick={() => moveGroup(g.id, "up")}
+                    disabled={i === 0}
+                    aria-label={`Move "${g.name}" up`}
+                    className="rounded p-0.5 text-muted transition-colors hover:text-ink disabled:opacity-20 disabled:pointer-events-none dark:text-muted dark:hover:text-ink"
+                  >
+                    <svg viewBox="0 0 16 16" className="h-3.5 w-3.5" fill="none">
+                      <path d="M4 10l4-4 4 4" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={() => moveGroup(g.id, "down")}
+                    disabled={i === groups.length - 1}
+                    aria-label={`Move "${g.name}" down`}
+                    className="rounded p-0.5 text-muted transition-colors hover:text-ink disabled:opacity-20 disabled:pointer-events-none dark:text-muted dark:hover:text-ink"
+                  >
+                    <svg viewBox="0 0 16 16" className="h-3.5 w-3.5" fill="none">
+                      <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </button>
+                </div>
                 <span aria-hidden="true" className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: g.color }} />
                 {editingId === g.id ? (
                   <input
