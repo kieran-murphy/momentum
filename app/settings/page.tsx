@@ -4,9 +4,11 @@ import { useState } from "react";
 import { useTaskStore } from "@/lib/useTaskStore";
 
 export default function SettingsPage() {
-  const { tasks, groups, hydrated, addGroup, deleteGroup } = useTaskStore();
+  const { tasks, groups, hydrated, addGroup, renameGroup, deleteGroup } = useTaskStore();
   const [name, setName] = useState("");
   const [isFocused, setIsFocused] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [draft, setDraft] = useState("");
 
   if (!hydrated) {
     return <div className="font-body text-sm text-muted">Loading…</div>;
@@ -16,6 +18,17 @@ export default function SettingsPage() {
     if (!name.trim()) return;
     addGroup(name);
     setName("");
+  }
+
+  function startEditing(id: string, currentName: string) {
+    setDraft(currentName);
+    setEditingId(id);
+  }
+
+  function commitEdit(id: string, originalName: string) {
+    const trimmed = draft.trim();
+    if (trimmed && trimmed !== originalName) renameGroup(id, trimmed);
+    setEditingId(null);
   }
 
   function handleDelete(id: string) {
@@ -49,15 +62,53 @@ export default function SettingsPage() {
                 className="group flex items-center gap-3 rounded-lg border border-line px-3 py-2.5 dark:border-line"
               >
                 <span aria-hidden="true" className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: g.color }} />
-                <span className="flex-1 truncate font-body text-[15px] text-ink dark:text-ink">{g.name}</span>
+                {editingId === g.id ? (
+                  <input
+                    autoFocus
+                    value={draft}
+                    onChange={(e) => setDraft(e.target.value)}
+                    onFocus={(e) => e.currentTarget.select()}
+                    onBlur={() => commitEdit(g.id, g.name)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") commitEdit(g.id, g.name);
+                      if (e.key === "Escape") setEditingId(null);
+                    }}
+                    aria-label={`Edit "${g.name}" group name`}
+                    className="min-w-0 flex-1 rounded-md border border-ink/20 bg-transparent px-1.5 py-0.5 font-body text-base text-ink focus:outline-none dark:border-ink/20 dark:text-ink"
+                  />
+                ) : (
+                  <span
+                    onDoubleClick={() => startEditing(g.id, g.name)}
+                    className="flex-1 truncate font-body text-[15px] text-ink dark:text-ink"
+                  >
+                    {g.name}
+                  </span>
+                )}
                 <span className="shrink-0 font-mono text-xs text-muted dark:text-muted">
                   {count} task{count === 1 ? "" : "s"}
                 </span>
-                {groups.length > 1 && (
+                {editingId !== g.id && (
+                  <button
+                    onClick={() => startEditing(g.id, g.name)}
+                    aria-label={`Rename "${g.name}" group`}
+                    className="ml-1 shrink-0 rounded-full p-1 text-muted opacity-0 transition-all hover:scale-110 hover:bg-black/10 hover:text-ink focus-visible:opacity-100 active:scale-95 group-hover:opacity-100 dark:text-muted dark:hover:text-ink"
+                  >
+                    <svg viewBox="0 0 16 16" className="h-4 w-4" fill="none">
+                      <path
+                        d="M11.3 2.7l2 2L5.3 12.7l-2.7.7.7-2.7 8-8z"
+                        stroke="currentColor"
+                        strokeWidth={1.4}
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </button>
+                )}
+                {groups.length > 1 && editingId !== g.id && (
                   <button
                     onClick={() => handleDelete(g.id)}
                     aria-label={`Delete "${g.name}" group`}
-                    className="ml-1 shrink-0 rounded-full p-1 text-muted opacity-0 transition-all hover:scale-110 hover:bg-black/10 hover:text-ink focus-visible:opacity-100 active:scale-95 group-hover:opacity-100 dark:text-muted dark:hover:text-ink"
+                    className="shrink-0 rounded-full p-1 text-muted opacity-0 transition-all hover:scale-110 hover:bg-black/10 hover:text-ink focus-visible:opacity-100 active:scale-95 group-hover:opacity-100 dark:text-muted dark:hover:text-ink"
                   >
                     <svg viewBox="0 0 16 16" className="h-4 w-4" fill="none">
                       <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" />

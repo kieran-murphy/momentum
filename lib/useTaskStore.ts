@@ -68,6 +68,12 @@ export function useTaskStore() {
     });
   }, []);
 
+  const updateTaskTitle = useCallback((id: string, title: string) => {
+    const trimmed = title.trim();
+    if (!trimmed) return;
+    setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, title: trimmed } : t)));
+  }, []);
+
   const toggleComplete = useCallback((id: string) => {
     setTasks((prev) =>
       prev.map((t) =>
@@ -103,6 +109,12 @@ export function useTaskStore() {
     [groups]
   );
 
+  const renameGroup = useCallback((id: string, name: string) => {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    setGroups((prev) => prev.map((g) => (g.id === id ? { ...g, name: trimmed } : g)));
+  }, []);
+
   const deleteGroup = useCallback((id: string) => {
     setGroups((prev) => {
       if (prev.length <= 1) return prev;
@@ -117,5 +129,17 @@ export function useTaskStore() {
     });
   }, []);
 
-  return { tasks, groups, hydrated, addTask, toggleComplete, deleteTask, reorderTasks, addGroup, deleteGroup };
+  return {
+    tasks,
+    groups,
+    hydrated,
+    addTask,
+    updateTaskTitle,
+    toggleComplete,
+    deleteTask,
+    reorderTasks,
+    addGroup,
+    renameGroup,
+    deleteGroup,
+  };
 }

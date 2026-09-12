@@ -10,6 +10,7 @@ export default function TaskList({
   tasks,
   groups,
   addTask,
+  updateTaskTitle,
   toggleComplete,
   deleteTask,
   reorderTasks,
@@ -17,6 +18,7 @@ export default function TaskList({
   tasks: Task[];
   groups: Group[];
   addTask: (title: string, groupId: string) => void;
+  updateTaskTitle: (id: string, title: string) => void;
   toggleComplete: (id: string) => void;
   deleteTask: (id: string) => void;
   reorderTasks: (orderedIds: string[]) => void;
@@ -114,6 +116,7 @@ export default function TaskList({
                 task={t}
                 group={groupById.get(t.groupId)}
                 onToggle={toggleComplete}
+                onUpdateTitle={updateTaskTitle}
                 onDelete={deleteTask}
                 isDragging={draggingId === t.id}
                 isDragOver={dragOverId === t.id}

@@ -5,7 +5,7 @@ import HabitItem from "@/components/HabitItem";
 import { useHabitStore } from "@/lib/useHabitStore";
 
 export default function HabitsPage() {
-  const { habits, hydrated, addHabit, deleteHabit, toggleToday } = useHabitStore();
+  const { habits, hydrated, addHabit, updateHabitName, deleteHabit, toggleToday } = useHabitStore();
 
   if (!hydrated) {
     return <div className="font-body text-sm text-muted">Loading…</div>;
@@ -37,7 +37,13 @@ export default function HabitsPage() {
       ) : (
         <ul className="flex flex-col gap-2">
           {habits.map((h) => (
-            <HabitItem key={h.id} habit={h} onToggleToday={toggleToday} onDelete={handleDelete} />
+            <HabitItem
+              key={h.id}
+              habit={h}
+              onToggleToday={toggleToday}
+              onUpdateName={updateHabitName}
+              onDelete={handleDelete}
+            />
           ))}
         </ul>
       )}

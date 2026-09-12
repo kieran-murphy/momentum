@@ -31,6 +31,12 @@ export function useHabitStore() {
     });
   }, []);
 
+  const updateHabitName = useCallback((id: string, name: string) => {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    setHabits((prev) => prev.map((h) => (h.id === id ? { ...h, name: trimmed } : h)));
+  }, []);
+
   const deleteHabit = useCallback((id: string) => {
     setHabits((prev) => prev.filter((h) => h.id !== id));
   }, []);
@@ -49,5 +55,5 @@ export function useHabitStore() {
     );
   }, []);
 
-  return { habits, hydrated, addHabit, deleteHabit, toggleToday };
+  return { habits, hydrated, addHabit, updateHabitName, deleteHabit, toggleToday };
 }
