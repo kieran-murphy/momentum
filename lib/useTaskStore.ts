@@ -4,6 +4,8 @@ import { useCallback, useEffect, useState } from "react";
 import { ACCENT_PALETTE, DEFAULT_GROUPS, Group, Task } from "./types";
 import { readLocal, writeLocal } from "./storage";
 import { generateId } from "./id";
+import { useDataSource } from "./dataSource";
+import { buildDemoTasks, DEMO_GROUPS } from "./demoData";
 
 const TASKS_KEY = "todo.tasks.v1";
 const GROUPS_KEY = "todo.groups.v1";
@@ -31,23 +33,31 @@ function dedupeGroupColors(groups: Group[]): Group[] {
 }
 
 export function useTaskStore() {
+  const [dataSource, setDataSource] = useDataSource();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [groups, setGroups] = useState<Group[]>(DEFAULT_GROUPS);
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    setTasks(normalizeTaskOrder(readLocal<Task[]>(TASKS_KEY, [])));
-    setGroups(dedupeGroupColors(readLocal<Group[]>(GROUPS_KEY, DEFAULT_GROUPS)));
+    if (dataSource === "demo") {
+      setTasks(buildDemoTasks());
+      setGroups(DEMO_GROUPS);
+    } else {
+      setTasks(normalizeTaskOrder(readLocal<Task[]>(TASKS_KEY, [])));
+      setGroups(dedupeGroupColors(readLocal<Group[]>(GROUPS_KEY, DEFAULT_GROUPS)));
+    }
     setHydrated(true);
-  }, []);
+  }, [dataSource]);
+
+  // Demo data is a sandbox: edits only ever live in memory, so switching
+  // back to "local" always restores your real data untouched.
+  useEffect(() => {
+    if (hydrated && dataSource === "local") writeLocal(TASKS_KEY, tasks);
+  }, [tasks, hydrated, dataSource]);
 
   useEffect(() => {
-    if (hydrated) writeLocal(TASKS_KEY, tasks);
-  }, [tasks, hydrated]);
-
-  useEffect(() => {
-    if (hydrated) writeLocal(GROUPS_KEY, groups);
-  }, [groups, hydrated]);
+    if (hydrated && dataSource === "local") writeLocal(GROUPS_KEY, groups);
+  }, [groups, hydrated, dataSource]);
 
   const addTask = useCallback((title: string, groupId: string) => {
     const trimmed = title.trim();
@@ -145,6 +155,8 @@ export function useTaskStore() {
     tasks,
     groups,
     hydrated,
+    dataSource,
+    setDataSource,
     addTask,
     updateTaskTitle,
     toggleComplete,

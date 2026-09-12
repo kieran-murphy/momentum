@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import { useTaskStore } from "@/lib/useTaskStore";
+import { canUseDemoData } from "@/lib/dataSource";
 
 export default function SettingsPage() {
-  const { tasks, groups, hydrated, addGroup, renameGroup, moveGroup, deleteGroup } = useTaskStore();
+  const { tasks, groups, hydrated, dataSource, setDataSource, addGroup, renameGroup, moveGroup, deleteGroup } =
+    useTaskStore();
   const [name, setName] = useState("");
   const [isFocused, setIsFocused] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -50,6 +52,43 @@ export default function SettingsPage() {
         <h1 className="font-display text-xl font-semibold text-ink dark:text-ink">Settings</h1>
         <p className="mt-1 font-body text-sm text-muted dark:text-muted">Add and remove your groups.</p>
       </div>
+
+      {canUseDemoData && (
+        <div className="flex flex-col gap-3 rounded-xl border border-line bg-surface p-4 animate-card-entrance dark:border-line dark:bg-surface">
+          <div>
+            <h2 className="font-body text-sm font-medium text-ink dark:text-ink">Data</h2>
+            <p className="mt-0.5 font-body text-xs text-muted dark:text-muted">
+              {dataSource === "demo"
+                ? "Browsing sample data for a look around. Nothing here is saved — switch back to see your real tasks and habits."
+                : "Using the tasks, habits, and groups stored on this device."}
+            </p>
+          </div>
+          <div className="inline-flex w-fit rounded-lg border border-line p-0.5 dark:border-line">
+            <button
+              onClick={() => setDataSource("local")}
+              aria-pressed={dataSource === "local"}
+              className={`rounded-md px-3 py-1.5 font-body text-sm transition-colors ${
+                dataSource === "local"
+                  ? "bg-ink text-paper"
+                  : "text-muted hover:text-ink dark:text-muted dark:hover:text-ink"
+              }`}
+            >
+              Your data
+            </button>
+            <button
+              onClick={() => setDataSource("demo")}
+              aria-pressed={dataSource === "demo"}
+              className={`rounded-md px-3 py-1.5 font-body text-sm transition-colors ${
+                dataSource === "demo"
+                  ? "bg-ink text-paper"
+                  : "text-muted hover:text-ink dark:text-muted dark:hover:text-ink"
+              }`}
+            >
+              Demo data
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="flex flex-col gap-2 rounded-xl border border-line bg-surface p-4 animate-card-entrance dark:border-line dark:bg-surface">
         <h2 className="font-body text-sm font-medium text-ink dark:text-ink">Groups</h2>

@@ -4,21 +4,24 @@ import { useCallback, useEffect, useState } from "react";
 import { ACCENT_PALETTE, Habit } from "./types";
 import { readLocal, writeLocal } from "./storage";
 import { dayKey } from "./date";
+import { useDataSource } from "./dataSource";
+import { buildDemoHabits } from "./demoData";
 
 const HABITS_KEY = "todo.habits.v1";
 
 export function useHabitStore() {
+  const [dataSource, setDataSource] = useDataSource();
   const [habits, setHabits] = useState<Habit[]>([]);
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    setHabits(readLocal<Habit[]>(HABITS_KEY, []));
+    setHabits(dataSource === "demo" ? buildDemoHabits() : readLocal<Habit[]>(HABITS_KEY, []));
     setHydrated(true);
-  }, []);
+  }, [dataSource]);
 
   useEffect(() => {
-    if (hydrated) writeLocal(HABITS_KEY, habits);
-  }, [habits, hydrated]);
+    if (hydrated && dataSource === "local") writeLocal(HABITS_KEY, habits);
+  }, [habits, hydrated, dataSource]);
 
   const addHabit = useCallback((name: string) => {
     const trimmed = name.trim();
@@ -55,5 +58,5 @@ export function useHabitStore() {
     );
   }, []);
 
-  return { habits, hydrated, addHabit, updateHabitName, deleteHabit, toggleToday };
+  return { habits, hydrated, dataSource, setDataSource, addHabit, updateHabitName, deleteHabit, toggleToday };
 }

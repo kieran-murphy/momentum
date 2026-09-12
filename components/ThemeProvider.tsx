@@ -24,6 +24,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     } else {
       html.classList.remove("dark");
     }
+    // Keeps the browser chrome (address bar, PWA title bar) matching the
+    // actually-applied theme, including a manual override of the OS setting.
+    document.querySelector('meta[name="theme-color"]')?.setAttribute("content", dark ? "#1A1916" : "#F2F1EA");
   };
 
   const toggleTheme = () => {
