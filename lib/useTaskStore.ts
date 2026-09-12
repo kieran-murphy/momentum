@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { ACCENT_PALETTE, DEFAULT_GROUPS, Group, Task } from "./types";
 import { readLocal, writeLocal } from "./storage";
+import { generateId } from "./id";
 
 const TASKS_KEY = "todo.tasks.v1";
 const GROUPS_KEY = "todo.groups.v1";
@@ -55,7 +56,7 @@ export function useTaskStore() {
       const minOrder = prev.reduce((min, t) => Math.min(min, t.order), 0);
       return [
         {
-          id: crypto.randomUUID(),
+          id: generateId(),
           title: trimmed,
           groupId,
           createdAt: new Date().toISOString(),

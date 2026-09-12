@@ -27,7 +27,7 @@ export default function AddHabit({ onAdd }: { onAdd: (name: string) => void }) {
         onFocus={() => setIsFocused(true)}
         onBlur={() => setIsFocused(false)}
         placeholder="Add a habit and press Enter"
-        className="min-w-0 flex-1 bg-transparent px-2 py-2 font-body text-[15px] text-ink placeholder:text-muted focus:outline-none dark:text-ink dark:placeholder:text-muted"
+        className="min-w-0 flex-1 bg-transparent px-2 py-2 font-body text-base text-ink placeholder:text-muted focus:outline-none dark:text-ink dark:placeholder:text-muted"
       />
       <button
         onClick={submit}

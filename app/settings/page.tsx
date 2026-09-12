@@ -84,7 +84,7 @@ export default function SettingsPage() {
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
           placeholder="New group name"
-          className="min-w-0 flex-1 bg-transparent px-2 py-2 font-body text-[15px] text-ink placeholder:text-muted focus:outline-none dark:text-ink dark:placeholder:text-muted"
+          className="min-w-0 flex-1 bg-transparent px-2 py-2 font-body text-base text-ink placeholder:text-muted focus:outline-none dark:text-ink dark:placeholder:text-muted"
         />
         <button
           onClick={submit}
