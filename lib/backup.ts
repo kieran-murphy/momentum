@@ -1,4 +1,4 @@
-import { readLocal, writeLocal } from "./storage";
+import { readLocal, writeLocal, writeLocalStrict } from "./storage";
 import { DEFAULT_GROUPS, Group, Habit, Task } from "./types";
 
 const TASKS_KEY = "todo.tasks.v1";
@@ -85,9 +85,33 @@ export function parseBackup(raw: string): Backup {
 }
 
 // Overwrites local storage directly; callers are expected to reload the app
-// afterward so every store hook re-hydrates from the new data.
+// afterward so every store hook re-hydrates from the new data. Throws
+// BackupImportError (without reloading) if a write fails partway through —
+// e.g. the device's storage quota is full — after best-effort restoring
+// whatever was there before, so a failed import doesn't leave a mix of old
+// and new data behind.
 export function applyBackup(backup: Backup) {
-  writeLocal(TASKS_KEY, backup.tasks);
-  writeLocal(GROUPS_KEY, backup.groups);
-  writeLocal(HABITS_KEY, backup.habits);
+  const previous: Backup = {
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    tasks: readLocal<Task[]>(TASKS_KEY, []),
+    groups: readLocal<Group[]>(GROUPS_KEY, DEFAULT_GROUPS),
+    habits: readLocal<Habit[]>(HABITS_KEY, []),
+  };
+
+  try {
+    writeLocalStrict(TASKS_KEY, backup.tasks);
+    writeLocalStrict(GROUPS_KEY, backup.groups);
+    writeLocalStrict(HABITS_KEY, backup.habits);
+  } catch (err) {
+    writeLocal(TASKS_KEY, previous.tasks);
+    writeLocal(GROUPS_KEY, previous.groups);
+    writeLocal(HABITS_KEY, previous.habits);
+    const isQuotaError = err instanceof DOMException && (err.name === "QuotaExceededError" || err.code === 22);
+    throw new BackupImportError(
+      isQuotaError
+        ? "Couldn't import — this device's storage is full. Nothing was changed; free up space (e.g. delete old tasks) and try again."
+        : "Couldn't save the imported data. Nothing was changed."
+    );
+  }
 }
