@@ -11,15 +11,15 @@ export default function Heatmap({ tasks, groups, habits }: { tasks: Task[]; grou
   const [hovered, setHovered] = useState<DayCell | null>(null);
   const [selected, setSelected] = useState<DayCell | null>(null);
 
-  const monthOptions = useMemo(() => listMonthOptions(tasks), [tasks]);
+  const monthOptions = useMemo(() => listMonthOptions(tasks, habits), [tasks, habits]);
   const [rangeKey, setRangeKey] = useState("recent");
   // "recent" (the default) has no matching month option, so this falls back
   // to the rolling 70-day view whenever rangeKey isn't a real month key.
   const selectedMonth = monthOptions.find((o) => o.key === rangeKey);
 
   const days = useMemo(
-    () => (selectedMonth ? buildMonthHeatmap(tasks, groups, selectedMonth.start) : buildRecentHeatmap(tasks, groups, RECENT_DAYS)),
-    [tasks, groups, selectedMonth]
+    () => (selectedMonth ? buildMonthHeatmap(tasks, habits, selectedMonth.start) : buildRecentHeatmap(tasks, habits, RECENT_DAYS)),
+    [tasks, habits, selectedMonth]
   );
 
   const weeks = useMemo(() => {

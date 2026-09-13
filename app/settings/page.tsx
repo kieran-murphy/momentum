@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useTaskStore } from "@/lib/useTaskStore";
 import { canUseDemoData } from "@/lib/dataSource";
+import { BackupPanel } from "@/components/BackupPanel";
 
 export default function SettingsPage() {
   const { tasks, groups, hydrated, dataSource, setDataSource, addGroup, renameGroup, moveGroup, deleteGroup } =
@@ -52,6 +53,8 @@ export default function SettingsPage() {
         <h1 className="font-display text-xl font-semibold text-ink dark:text-ink">Settings</h1>
         <p className="mt-1 font-body text-sm text-muted dark:text-muted">Add and remove your groups.</p>
       </div>
+
+      <BackupPanel />
 
       {canUseDemoData && (
         <div className="flex flex-col gap-3 rounded-xl border border-line bg-surface p-4 animate-card-entrance dark:border-line dark:bg-surface">

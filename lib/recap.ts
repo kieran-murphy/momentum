@@ -1,10 +1,11 @@
-import { Group, Task } from "./types";
+import { Habit, Task } from "./types";
 import { dayKey, daysAgo, endOfWeek, startOfDay, startOfWeek } from "./date";
 
 export type DayCell = {
   date: Date;
   key: string;
   countsByGroup: Record<string, number>;
+  habitTotal: number;
   total: number;
   // False for padding days outside the requested range (an adjacent month's
   // days when viewing a single month, or the extra days used to complete a
@@ -25,18 +26,38 @@ function countsByDay(tasks: Task[]): Map<string, Record<string, number>> {
   return byDay;
 }
 
-function buildDayCells(byDay: Map<string, Record<string, number>>, gridStart: Date, gridEnd: Date, isInRange: (d: Date) => boolean): DayCell[] {
+// Habits have no group, so they're tallied separately from countsByGroup and
+// folded into each cell's total instead.
+function habitCountsByDay(habits: Habit[]): Map<string, number> {
+  const byDay = new Map<string, number>();
+  for (const h of habits) {
+    for (const day of h.completions) {
+      byDay.set(day, (byDay.get(day) ?? 0) + 1);
+    }
+  }
+  return byDay;
+}
+
+function buildDayCells(
+  taskCounts: Map<string, Record<string, number>>,
+  habitCounts: Map<string, number>,
+  gridStart: Date,
+  gridEnd: Date,
+  isInRange: (d: Date) => boolean
+): DayCell[] {
   const cells: DayCell[] = [];
   const cursor = new Date(gridStart);
   while (cursor <= gridEnd) {
     const k = dayKey(cursor);
-    const countsByGroup = byDay.get(k) ?? {};
-    const total = Object.values(countsByGroup).reduce((a, b) => a + b, 0);
+    const countsByGroup = taskCounts.get(k) ?? {};
+    const taskTotal = Object.values(countsByGroup).reduce((a, b) => a + b, 0);
+    const habitTotal = habitCounts.get(k) ?? 0;
     cells.push({
       date: new Date(cursor),
       key: k,
       countsByGroup,
-      total,
+      habitTotal,
+      total: taskTotal + habitTotal,
       inRange: isInRange(cursor),
     });
     cursor.setDate(cursor.getDate() + 1);
@@ -47,29 +68,35 @@ function buildDayCells(byDay: Map<string, Record<string, number>>, gridStart: Da
 // Builds a calendar-grid view of a single month: the target month's days,
 // padded at both ends to complete whole weeks (Sun-Sat), so columns line up
 // as real calendar weeks.
-export function buildMonthHeatmap(tasks: Task[], groups: Group[], monthStart: Date): DayCell[] {
+export function buildMonthHeatmap(tasks: Task[], habits: Habit[], monthStart: Date): DayCell[] {
   const month = monthStart.getMonth();
   const firstOfMonth = new Date(monthStart.getFullYear(), month, 1);
   const lastOfMonth = new Date(monthStart.getFullYear(), month + 1, 0);
-  return buildDayCells(countsByDay(tasks), startOfWeek(firstOfMonth), endOfWeek(lastOfMonth), (d) => d.getMonth() === month);
+  return buildDayCells(
+    countsByDay(tasks),
+    habitCountsByDay(habits),
+    startOfWeek(firstOfMonth),
+    endOfWeek(lastOfMonth),
+    (d) => d.getMonth() === month
+  );
 }
 
 // Builds a rolling window of the last `days` days, inclusive of today.
 // `days` should be a multiple of 7 — with no remainder to pad away, the
 // window divides evenly into whole weeks on its own, so today always lands
 // as the very last cell instead of being trailed by blank filler.
-export function buildRecentHeatmap(tasks: Task[], groups: Group[], days: number): DayCell[] {
+export function buildRecentHeatmap(tasks: Task[], habits: Habit[], days: number): DayCell[] {
   const rangeEnd = startOfDay(new Date());
   const rangeStart = daysAgo(days - 1);
-  return buildDayCells(countsByDay(tasks), rangeStart, rangeEnd, () => true);
+  return buildDayCells(countsByDay(tasks), habitCountsByDay(habits), rangeStart, rangeEnd, () => true);
 }
 
 export type MonthOption = { key: string; label: string; start: Date };
 
 // Months selectable in the heatmap's month picker: the current month, plus
-// every earlier month that has at least one completed task, so the list
-// stays short instead of listing years of empty history.
-export function listMonthOptions(tasks: Task[]): MonthOption[] {
+// every earlier month that has at least one completed task or habit, so the
+// list stays short instead of listing years of empty history.
+export function listMonthOptions(tasks: Task[], habits: Habit[]): MonthOption[] {
   const now = new Date();
   const currentStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
@@ -79,6 +106,13 @@ export function listMonthOptions(tasks: Task[]): MonthOption[] {
     const d = new Date(t.completedAt);
     const monthStart = new Date(d.getFullYear(), d.getMonth(), 1);
     if (monthStart < earliest) earliest = monthStart;
+  }
+  for (const h of habits) {
+    for (const day of h.completions) {
+      const d = new Date(day);
+      const monthStart = new Date(d.getFullYear(), d.getMonth(), 1);
+      if (monthStart < earliest) earliest = monthStart;
+    }
   }
 
   const options: MonthOption[] = [];
