@@ -1,8 +1,8 @@
 import { Habit } from "./types";
 import { dayKey, daysAgo } from "./date";
 
-export function isDoneToday(habit: Habit): boolean {
-  return habit.completions.includes(dayKey(new Date()));
+export function isDoneOn(habit: Habit, key: string): boolean {
+  return habit.completions.includes(key);
 }
 
 export function habitStreak(habit: Habit): number {

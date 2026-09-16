@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { ACCENT_PALETTE, Habit } from "./types";
 import { readLocal, writeLocal } from "./storage";
-import { dayKey } from "./date";
 import { useDataSource } from "./dataSource";
 import { buildDemoHabits } from "./demoData";
 
@@ -44,19 +43,18 @@ export function useHabitStore() {
     setHabits((prev) => prev.filter((h) => h.id !== id));
   }, []);
 
-  const toggleToday = useCallback((id: string) => {
-    const today = dayKey(new Date());
+  const toggleCompletion = useCallback((id: string, key: string) => {
     setHabits((prev) =>
       prev.map((h) => {
         if (h.id !== id) return h;
-        const done = h.completions.includes(today);
+        const done = h.completions.includes(key);
         return {
           ...h,
-          completions: done ? h.completions.filter((d) => d !== today) : [...h.completions, today],
+          completions: done ? h.completions.filter((d) => d !== key) : [...h.completions, key],
         };
       })
     );
   }, []);
 
-  return { habits, hydrated, dataSource, setDataSource, addHabit, updateHabitName, deleteHabit, toggleToday };
+  return { habits, hydrated, dataSource, setDataSource, addHabit, updateHabitName, deleteHabit, toggleCompletion };
 }
