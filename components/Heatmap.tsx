@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Dropdown from "@/components/Dropdown";
 import { Group, Habit, Task } from "@/lib/types";
 import { DayCell, cellColor, listMonthOptions, buildMonthHeatmap, buildRecentHeatmap } from "@/lib/recap";
 import { dayKey, formatDayLabel, weekdayLabel } from "@/lib/date";
@@ -75,31 +76,15 @@ export default function Heatmap({ tasks, groups, habits }: { tasks: Task[]; grou
             {rangeTotal} completed{rangeTotal > 0 ? ` · ${activeDays} active day${activeDays === 1 ? "" : "s"}` : ""}
           </p>
         </div>
-        <div className="relative">
-          <select
-            value={rangeKey}
-            onChange={(e) => selectRange(e.target.value)}
-            aria-label="Date range"
-            className="appearance-none rounded-lg border border-line bg-paper py-1.5 pl-3 pr-8 font-body text-base text-ink focus:outline-none dark:border-line dark:bg-paper dark:text-ink"
-          >
-            <option value="recent">Past {RECENT_DAYS} days</option>
-            <optgroup label="By month">
-              {monthOptions.map((o) => (
-                <option key={o.key} value={o.key}>
-                  {o.label}
-                </option>
-              ))}
-            </optgroup>
-          </select>
-          <svg
-            aria-hidden="true"
-            viewBox="0 0 20 20"
-            fill="none"
-            className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted dark:text-muted"
-          >
-            <path d="M5.5 8L10 12.5L14.5 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </div>
+        <Dropdown
+          value={rangeKey}
+          onChange={selectRange}
+          ariaLabel="Date range"
+          sections={[
+            { options: [{ value: "recent", label: `Past ${RECENT_DAYS} days` }] },
+            { label: "By month", options: monthOptions.map((o) => ({ value: o.key, label: o.label })) },
+          ]}
+        />
       </div>
 
       <div className="flex flex-col items-center gap-5 sm:flex-row sm:justify-center sm:gap-10">
