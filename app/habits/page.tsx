@@ -51,7 +51,7 @@ export default function HabitsPage() {
         />
       </div>
 
-      <AddHabit onAdd={addHabit} />
+      <AddHabit habits={habits} onAdd={addHabit} />
 
       {habits.length === 0 ? (
         <div className="rounded-xl border border-dashed border-line px-4 py-10 text-center font-body text-sm text-muted animate-slide-up dark:border-line dark:text-muted">

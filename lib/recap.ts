@@ -131,8 +131,10 @@ export function listMonthOptions(tasks: Task[], habits: Habit[]): MonthOption[] 
 // A day's cell is a flat intensity color rather than a per-group split —
 // the click-to-expand breakdown is where per-group detail actually lives.
 // Uses CSS custom properties (not hardcoded hex) so it adapts in dark mode.
-export function cellColor(cell: DayCell): string {
-  return cell.total === 0 ? "var(--color-line)" : "var(--color-gold)";
+// `activeColor` lets a single-habit filter tint cells with that habit's own
+// color (matching the habit page) instead of the default gold.
+export function cellColor(cell: DayCell, activeColor = "var(--color-gold)"): string {
+  return cell.total === 0 ? "var(--color-line)" : activeColor;
 }
 
 export function currentStreak(tasks: Task[]): number {

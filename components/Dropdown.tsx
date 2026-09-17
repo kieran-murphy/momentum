@@ -2,7 +2,7 @@
 
 import { Fragment, useEffect, useRef, useState } from "react";
 
-export type DropdownOption = { value: string; label: string };
+export type DropdownOption = { value: string; label: string; color?: string };
 export type DropdownSection = { label?: string; options: DropdownOption[] };
 
 export default function Dropdown({
@@ -68,6 +68,9 @@ export default function Dropdown({
         aria-label={ariaLabel}
         className="flex items-center gap-2 rounded-lg border border-line bg-paper py-1.5 pl-3 pr-2.5 font-body text-base text-ink transition-colors hover:border-ink/20 focus:outline-none dark:border-line dark:bg-paper dark:text-ink"
       >
+        {current?.color && (
+          <span aria-hidden="true" className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: current.color }} />
+        )}
         <span className="truncate">{current?.label ?? value}</span>
         <svg
           aria-hidden="true"
@@ -122,11 +125,18 @@ export default function Dropdown({
                           moveFocus(idx, -1);
                         }
                       }}
-                      className={`block w-full px-3 py-1.5 text-left font-body text-base transition-colors hover:bg-ink/5 focus:bg-ink/5 focus:outline-none ${
+                      className={`flex w-full items-center gap-2 px-3 py-1.5 text-left font-body text-base transition-colors hover:bg-ink/5 focus:bg-ink/5 focus:outline-none ${
                         selected ? "font-medium text-ink" : "text-ink/80"
                       }`}
                     >
-                      {option.label}
+                      {option.color && (
+                        <span
+                          aria-hidden="true"
+                          className="h-2.5 w-2.5 shrink-0 rounded-full"
+                          style={{ backgroundColor: option.color }}
+                        />
+                      )}
+                      <span className="truncate">{option.label}</span>
                     </button>
                   </li>
                 );

@@ -22,14 +22,15 @@ export function useHabitStore() {
     if (hydrated && dataSource === "local") writeLocal(HABITS_KEY, habits);
   }, [habits, hydrated, dataSource]);
 
-  const addHabit = useCallback((name: string) => {
+  const addHabit = useCallback((name: string, color?: string) => {
     const trimmed = name.trim();
     if (!trimmed) return;
     setHabits((prev) => {
       const usedColors = new Set(prev.map((h) => h.color));
-      const color = ACCENT_PALETTE.find((c) => !usedColors.has(c)) ?? ACCENT_PALETTE[prev.length % ACCENT_PALETTE.length];
+      const resolvedColor =
+        color ?? ACCENT_PALETTE.find((c) => !usedColors.has(c)) ?? ACCENT_PALETTE[prev.length % ACCENT_PALETTE.length];
       const id = trimmed.toLowerCase().replace(/[^a-z0-9]+/g, "-") + "-" + Date.now().toString(36);
-      return [...prev, { id, name: trimmed, color, createdAt: new Date().toISOString(), completions: [] }];
+      return [...prev, { id, name: trimmed, color: resolvedColor, createdAt: new Date().toISOString(), completions: [] }];
     });
   }, []);
 

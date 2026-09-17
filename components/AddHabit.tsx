@@ -1,15 +1,27 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import Dropdown from "@/components/Dropdown";
+import { ACCENT_PALETTE, ACCENT_PALETTE_NAMES, Habit } from "@/lib/types";
 
-export default function AddHabit({ onAdd }: { onAdd: (name: string) => void }) {
+export default function AddHabit({ habits, onAdd }: { habits: Habit[]; onAdd: (name: string, color: string) => void }) {
   const [name, setName] = useState("");
   const [isFocused, setIsFocused] = useState(false);
+  const [colorOverride, setColorOverride] = useState<string | null>(null);
+
+  // Suggests the first palette color no existing habit is already using, so
+  // new habits default to standing out from the ones already in the list.
+  const suggestedColor = useMemo(() => {
+    const used = new Set(habits.map((h) => h.color));
+    return ACCENT_PALETTE.find((c) => !used.has(c)) ?? ACCENT_PALETTE[habits.length % ACCENT_PALETTE.length];
+  }, [habits]);
+  const color = colorOverride ?? suggestedColor;
 
   function submit() {
     if (!name.trim()) return;
-    onAdd(name);
+    onAdd(name, color);
     setName("");
+    setColorOverride(null);
   }
 
   return (
@@ -18,6 +30,17 @@ export default function AddHabit({ onAdd }: { onAdd: (name: string) => void }) {
         isFocused ? "border-ink/30 shadow-md dark:border-ink/30 dark:shadow-md" : ""
       }`}
     >
+      <Dropdown
+        value={color}
+        onChange={setColorOverride}
+        ariaLabel="Habit color"
+        className="shrink-0"
+        sections={[
+          {
+            options: ACCENT_PALETTE.map((c) => ({ value: c, label: ACCENT_PALETTE_NAMES[c], color: c })),
+          },
+        ]}
+      />
       <input
         value={name}
         onChange={(e) => setName(e.target.value)}

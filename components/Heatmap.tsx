@@ -18,9 +18,19 @@ export default function Heatmap({ tasks, groups, habits }: { tasks: Task[]; grou
   // to the rolling 70-day view whenever rangeKey isn't a real month key.
   const selectedMonth = monthOptions.find((o) => o.key === rangeKey);
 
+  // "all" (the default) leaves tasks in the mix; picking one habit narrows
+  // the whole heatmap down to just that habit, so tasks drop out entirely.
+  const [habitFilter, setHabitFilter] = useState("all");
+  const activeHabit = habits.find((h) => h.id === habitFilter);
+  const filteredTasks = habitFilter === "all" ? tasks : [];
+  const filteredHabits = activeHabit ? [activeHabit] : habits;
+
   const days = useMemo(
-    () => (selectedMonth ? buildMonthHeatmap(tasks, habits, selectedMonth.start) : buildRecentHeatmap(tasks, habits, RECENT_DAYS)),
-    [tasks, habits, selectedMonth]
+    () =>
+      selectedMonth
+        ? buildMonthHeatmap(filteredTasks, filteredHabits, selectedMonth.start)
+        : buildRecentHeatmap(filteredTasks, filteredHabits, RECENT_DAYS),
+    [filteredTasks, filteredHabits, selectedMonth]
   );
 
   const weeks = useMemo(() => {
@@ -46,9 +56,9 @@ export default function Heatmap({ tasks, groups, habits }: { tasks: Task[]; grou
   // only mechanism that actually works on a touch device.
   const displayed = hovered ?? selected;
   const displayedTasks = displayed
-    ? tasks.filter((t) => t.completedAt && dayKey(new Date(t.completedAt)) === displayed.key)
+    ? filteredTasks.filter((t) => t.completedAt && dayKey(new Date(t.completedAt)) === displayed.key)
     : [];
-  const displayedHabits = displayed ? habits.filter((h) => h.completions.includes(displayed.key)) : [];
+  const displayedHabits = displayed ? filteredHabits.filter((h) => h.completions.includes(displayed.key)) : [];
 
   // 70 days is an exact 10 columns and a month is at most 6, so one cell
   // size comfortably fits a phone-width card in both modes — see the mobile
@@ -59,6 +69,12 @@ export default function Heatmap({ tasks, groups, habits }: { tasks: Task[]; grou
 
   function selectRange(key: string) {
     setRangeKey(key);
+    setHovered(null);
+    setSelected(null);
+  }
+
+  function selectHabitFilter(key: string) {
+    setHabitFilter(key);
     setHovered(null);
     setSelected(null);
   }
@@ -76,15 +92,32 @@ export default function Heatmap({ tasks, groups, habits }: { tasks: Task[]; grou
             {rangeTotal} completed{rangeTotal > 0 ? ` · ${activeDays} active day${activeDays === 1 ? "" : "s"}` : ""}
           </p>
         </div>
-        <Dropdown
-          value={rangeKey}
-          onChange={selectRange}
-          ariaLabel="Date range"
-          sections={[
-            { options: [{ value: "recent", label: `Past ${RECENT_DAYS} days` }] },
-            { label: "By month", options: monthOptions.map((o) => ({ value: o.key, label: o.label })) },
-          ]}
-        />
+        <div className="flex items-center gap-2">
+          {habits.length > 0 && (
+            <Dropdown
+              value={habitFilter}
+              onChange={selectHabitFilter}
+              ariaLabel="Filter by habit"
+              sections={[
+                {
+                  options: [
+                    { value: "all", label: "All habits" },
+                    ...habits.map((h) => ({ value: h.id, label: h.name })),
+                  ],
+                },
+              ]}
+            />
+          )}
+          <Dropdown
+            value={rangeKey}
+            onChange={selectRange}
+            ariaLabel="Date range"
+            sections={[
+              { options: [{ value: "recent", label: `Past ${RECENT_DAYS} days` }] },
+              { label: "By month", options: monthOptions.map((o) => ({ value: o.key, label: o.label })) },
+            ]}
+          />
+        </div>
       </div>
 
       <div className="flex flex-col items-center gap-5 sm:flex-row sm:justify-center sm:gap-10">
@@ -105,6 +138,7 @@ export default function Heatmap({ tasks, groups, habits }: { tasks: Task[]; grou
                 }
                 const scale = 0.25 + 0.75 * (cell.total / maxTotal);
                 const isSelected = selected?.key === cell.key;
+                const glowColor = activeHabit?.color ?? "var(--color-gold)";
                 return (
                   <button
                     key={cell.key}
@@ -114,12 +148,11 @@ export default function Heatmap({ tasks, groups, habits }: { tasks: Task[]; grou
                     onClick={() => toggleSelected(cell)}
                     aria-pressed={isSelected}
                     aria-label={`${formatDayLabel(cell.date)}: ${cell.total} completed`}
-                    className={`${cellClass} transition-all duration-200 hover:scale-125 focus:outline-none ${
-                      isSelected ? "shadow-[0_0_2px_1px_var(--color-gold),0_0_6px_2px_var(--color-gold)]" : ""
-                    }`}
+                    className={`${cellClass} transition-all duration-200 hover:scale-125 focus:outline-none`}
                     style={{
-                      background: cellColor(cell),
+                      background: cellColor(cell, activeHabit?.color),
                       opacity: cell.total === 0 ? 1 : scale,
+                      boxShadow: isSelected ? `0 0 2px 1px ${glowColor}, 0 0 6px 2px ${glowColor}` : undefined,
                     }}
                   />
                 );
