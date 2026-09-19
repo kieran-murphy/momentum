@@ -86,6 +86,12 @@ export function useTaskStore() {
     setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, title: trimmed } : t)));
   }, []);
 
+  // An empty description clears it rather than storing a blank string.
+  const updateTaskDescription = useCallback((id: string, description: string) => {
+    const trimmed = description.trim();
+    setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, description: trimmed || undefined } : t)));
+  }, []);
+
   const toggleComplete = useCallback((id: string) => {
     setTasks((prev) =>
       prev.map((t) =>
@@ -170,6 +176,7 @@ export function useTaskStore() {
     setDataSource,
     addTask,
     updateTaskTitle,
+    updateTaskDescription,
     toggleComplete,
     deleteTask,
     reorderTasks,

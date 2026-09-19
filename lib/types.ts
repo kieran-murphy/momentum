@@ -12,6 +12,7 @@ export type Task = {
   createdAt: string; // ISO
   completedAt: string | null; // ISO or null
   order: number; // manual sort position within its group; lower shows first
+  description?: string; // optional longer notes, viewed/edited in a modal
   // Set when a completed task is deleted. The record is kept (hidden from the
   // task list) so its completion stays in Recap history.
   deletedAt?: string | null; // ISO

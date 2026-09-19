@@ -3,12 +3,14 @@
 import { useState, type LiHTMLAttributes } from "react";
 import { Group, Task } from "@/lib/types";
 import Burst from "./Burst";
+import TaskDescriptionModal from "./TaskDescriptionModal";
 
 export default function TaskItem({
   task,
   group,
   onToggle,
   onUpdateTitle,
+  onUpdateDescription,
   onDelete,
   dragProps,
   isDragging,
@@ -18,6 +20,7 @@ export default function TaskItem({
   group: Group | undefined;
   onToggle: (id: string) => void;
   onUpdateTitle: (id: string, title: string) => void;
+  onUpdateDescription: (id: string, description: string) => void;
   onDelete: (id: string) => void;
   dragProps?: LiHTMLAttributes<HTMLLIElement>;
   isDragging?: boolean;
@@ -26,9 +29,11 @@ export default function TaskItem({
   const [showBurst, setShowBurst] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [isDescriptionOpen, setIsDescriptionOpen] = useState(false);
   const [draft, setDraft] = useState(task.title);
   const color = group?.color ?? "#6B6A5E";
   const isDone = Boolean(task.completedAt);
+  const hasDescription = Boolean(task.description);
 
   const handleDelete = (id: string) => {
     const message = isDone
@@ -51,113 +56,145 @@ export default function TaskItem({
   };
 
   return (
-    <li
-      {...dragProps}
-      draggable={isEditing ? false : dragProps?.draggable}
-      className={`group flex items-center gap-3 rounded-xl border border-line bg-surface px-4 py-3 transition-all hover:border-ink/20 dark:border-line dark:bg-surface dark:hover:border-ink/20 ${
-        isExiting ? "animate-fade-out" : "animate-slide-up"
-      } ${isDragging ? "opacity-40" : ""} ${isDragOver ? "ring-2 ring-ink/20 dark:ring-ink/20" : ""}`}
-    >
-      <span
-        aria-hidden="true"
-        className="shrink-0 cursor-grab text-line transition-colors hover:text-muted active:cursor-grabbing dark:text-line dark:hover:text-muted"
+    <>
+      <li
+        {...dragProps}
+        draggable={isEditing ? false : dragProps?.draggable}
+        className={`group flex items-center gap-3 rounded-xl border border-line bg-surface px-4 py-3 transition-all hover:border-ink/20 dark:border-line dark:bg-surface dark:hover:border-ink/20 ${
+          isExiting ? "animate-fade-out" : "animate-slide-up"
+        } ${isDragging ? "opacity-40" : ""} ${isDragOver ? "ring-2 ring-ink/20 dark:ring-ink/20" : ""}`}
       >
-        <svg viewBox="0 0 16 16" className="h-4 w-4" fill="currentColor">
-          <circle cx="5" cy="4" r="1.3" />
-          <circle cx="5" cy="8" r="1.3" />
-          <circle cx="5" cy="12" r="1.3" />
-          <circle cx="11" cy="4" r="1.3" />
-          <circle cx="11" cy="8" r="1.3" />
-          <circle cx="11" cy="12" r="1.3" />
-        </svg>
-      </span>
-
-      <button
-        onClick={() => {
-          if (!isDone) setShowBurst(true);
-          onToggle(task.id);
-        }}
-        aria-pressed={isDone}
-        aria-label={isDone ? `Mark "${task.title}" as not done` : `Mark "${task.title}" as done`}
-        className="relative flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 transition-all"
-        style={{
-          borderColor: color,
-          backgroundColor: isDone ? color : "transparent",
-        }}
-      >
-        {isDone && (
-          <svg viewBox="0 0 16 16" className="h-3.5 w-3.5 text-surface" fill="none">
-            <path
-              d="M3 8.5L6.5 12L13 4"
-              stroke="currentColor"
-              strokeWidth={2}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        )}
-        {showBurst && <Burst color={color} onDone={() => setShowBurst(false)} />}
-      </button>
-
-      {isEditing ? (
-        <input
-          autoFocus
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          onFocus={(e) => e.currentTarget.select()}
-          onBlur={commitEdit}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") commitEdit();
-            if (e.key === "Escape") setIsEditing(false);
-          }}
-          aria-label={`Edit "${task.title}"`}
-          className="min-w-0 flex-1 rounded-md border border-ink/20 bg-transparent px-1.5 py-0.5 font-body text-base text-ink focus:outline-none dark:border-ink/20 dark:text-ink"
-        />
-      ) : (
         <span
-          onDoubleClick={startEditing}
-          className={`flex-1 font-body text-[15px] ${
-            isDone ? "text-muted line-through decoration-2 dark:text-muted" : "text-ink dark:text-ink"
-          }`}
+          aria-hidden="true"
+          className="shrink-0 cursor-grab text-line transition-colors hover:text-muted active:cursor-grabbing dark:text-line dark:hover:text-muted"
         >
-          {task.title}
+          <svg viewBox="0 0 16 16" className="h-4 w-4" fill="currentColor">
+            <circle cx="5" cy="4" r="1.3" />
+            <circle cx="5" cy="8" r="1.3" />
+            <circle cx="5" cy="12" r="1.3" />
+            <circle cx="11" cy="4" r="1.3" />
+            <circle cx="11" cy="8" r="1.3" />
+            <circle cx="11" cy="12" r="1.3" />
+          </svg>
         </span>
-      )}
 
-      <span
-        className="hidden rounded-full px-2 py-0.5 font-body text-xs sm:inline-block"
-        style={{ backgroundColor: group?.soft ?? "#EEE", color }}
-      >
-        {group?.name ?? "—"}
-      </span>
-
-      {!isEditing && (
         <button
-          onClick={startEditing}
-          aria-label={`Edit "${task.title}"`}
-          className="ml-1 opacity-0 transition-opacity hover:text-ink group-hover:opacity-100 text-muted"
+          onClick={() => {
+            if (!isDone) setShowBurst(true);
+            onToggle(task.id);
+          }}
+          aria-pressed={isDone}
+          aria-label={isDone ? `Mark "${task.title}" as not done` : `Mark "${task.title}" as done`}
+          className="relative flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 transition-all"
+          style={{
+            borderColor: color,
+            backgroundColor: isDone ? color : "transparent",
+          }}
+        >
+          {isDone && (
+            <svg viewBox="0 0 16 16" className="h-3.5 w-3.5 text-surface" fill="none">
+              <path
+                d="M3 8.5L6.5 12L13 4"
+                stroke="currentColor"
+                strokeWidth={2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          )}
+          {showBurst && <Burst color={color} onDone={() => setShowBurst(false)} />}
+        </button>
+
+        {isEditing ? (
+          <input
+            autoFocus
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onFocus={(e) => e.currentTarget.select()}
+            onBlur={commitEdit}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") commitEdit();
+              if (e.key === "Escape") setIsEditing(false);
+            }}
+            aria-label={`Edit "${task.title}"`}
+            className="min-w-0 flex-1 rounded-md border border-ink/20 bg-transparent px-1.5 py-0.5 font-body text-base text-ink focus:outline-none dark:border-ink/20 dark:text-ink"
+          />
+        ) : (
+          <span
+            onDoubleClick={startEditing}
+            className={`flex-1 font-body text-[15px] ${
+              isDone ? "text-muted line-through decoration-2 dark:text-muted" : "text-ink dark:text-ink"
+            }`}
+          >
+            {task.title}
+          </span>
+        )}
+
+        <span
+          className="hidden rounded-full px-2 py-0.5 font-body text-xs sm:inline-block"
+          style={{ backgroundColor: group?.soft ?? "#EEE", color }}
+        >
+          {group?.name ?? "—"}
+        </span>
+
+        <button
+          onClick={() => setIsDescriptionOpen(true)}
+          aria-label={hasDescription ? `View description of "${task.title}"` : `Add description to "${task.title}"`}
+          title={hasDescription ? "View description" : "Add description"}
+          className={`ml-1 transition-opacity hover:text-ink focus-visible:opacity-100 ${
+            hasDescription ? "text-ink dark:text-ink" : "opacity-0 text-muted group-hover:opacity-100"
+          }`}
         >
           <svg viewBox="0 0 16 16" className="h-4 w-4" fill="none">
             <path
-              d="M11.3 2.7l2 2L5.3 12.7l-2.7.7.7-2.7 8-8z"
+              d="M3 3.5h10M3 7h10M3 10.5h6"
               stroke="currentColor"
               strokeWidth={1.4}
               strokeLinecap="round"
-              strokeLinejoin="round"
             />
           </svg>
         </button>
-      )}
 
-      <button
-        onClick={() => handleDelete(task.id)}
-        aria-label={`Delete "${task.title}"`}
-        className="opacity-0 transition-opacity hover:text-ink group-hover:opacity-100 text-muted"
-      >
-        <svg viewBox="0 0 16 16" className="h-4 w-4" fill="none">
-          <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" />
-        </svg>
-      </button>
-    </li>
+        {!isEditing && (
+          <button
+            onClick={startEditing}
+            aria-label={`Edit "${task.title}"`}
+            className="ml-1 opacity-0 transition-opacity hover:text-ink group-hover:opacity-100 text-muted"
+          >
+            <svg viewBox="0 0 16 16" className="h-4 w-4" fill="none">
+              <path
+                d="M11.3 2.7l2 2L5.3 12.7l-2.7.7.7-2.7 8-8z"
+                stroke="currentColor"
+                strokeWidth={1.4}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
+        )}
+
+        <button
+          onClick={() => handleDelete(task.id)}
+          aria-label={`Delete "${task.title}"`}
+          className="opacity-0 transition-opacity hover:text-ink group-hover:opacity-100 text-muted"
+        >
+          <svg viewBox="0 0 16 16" className="h-4 w-4" fill="none">
+            <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" />
+          </svg>
+        </button>
+      </li>
+      {/* Rendered beside the <li>, not inside it: React events bubble through
+          portals, and the row's drag handlers would otherwise fire on text
+          selections dragged inside the modal's textarea. */}
+      {isDescriptionOpen && (
+        <TaskDescriptionModal
+          title={task.title}
+          color={color}
+          description={task.description ?? ""}
+          onSave={(description) => onUpdateDescription(task.id, description)}
+          onClose={() => setIsDescriptionOpen(false)}
+        />
+      )}
+    </>
   );
 }
