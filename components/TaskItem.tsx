@@ -31,7 +31,10 @@ export default function TaskItem({
   const isDone = Boolean(task.completedAt);
 
   const handleDelete = (id: string) => {
-    if (!window.confirm(`Delete "${task.title}"? This can't be undone.`)) return;
+    const message = isDone
+      ? `Delete "${task.title}"? It'll be removed from your list, but its completion stays in Recap.`
+      : `Delete "${task.title}"? This can't be undone.`;
+    if (!window.confirm(message)) return;
     setIsExiting(true);
     setTimeout(() => onDelete(id), 250);
   };

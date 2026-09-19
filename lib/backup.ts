@@ -110,7 +110,7 @@ export function applyBackup(backup: Backup) {
     const isQuotaError = err instanceof DOMException && (err.name === "QuotaExceededError" || err.code === 22);
     throw new BackupImportError(
       isQuotaError
-        ? "Couldn't import — this device's storage is full. Nothing was changed; free up space (e.g. delete old tasks) and try again."
+        ? "Couldn't import — this device's storage is full. Nothing was changed; free up some browser storage and try again."
         : "Couldn't save the imported data. Nothing was changed."
     );
   }

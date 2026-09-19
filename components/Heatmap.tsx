@@ -24,6 +24,9 @@ export default function Heatmap({ tasks, groups, habits }: { tasks: Task[]; grou
   const activeHabit = habits.find((h) => h.id === habitFilter);
   const filteredTasks = habitFilter === "all" ? tasks : [];
   const filteredHabits = activeHabit ? [activeHabit] : habits;
+  // Deleted habits stay in `habits` so their history keeps counting; they're
+  // listed separately so the filter can still isolate them.
+  const deletedHabits = habits.filter((h) => h.deletedAt);
 
   const days = useMemo(
     () =>
@@ -102,9 +105,12 @@ export default function Heatmap({ tasks, groups, habits }: { tasks: Task[]; grou
                 {
                   options: [
                     { value: "all", label: "All habits" },
-                    ...habits.map((h) => ({ value: h.id, label: h.name })),
+                    ...habits.filter((h) => !h.deletedAt).map((h) => ({ value: h.id, label: h.name })),
                   ],
                 },
+                ...(deletedHabits.length > 0
+                  ? [{ label: "Deleted", options: deletedHabits.map((h) => ({ value: h.id, label: h.name })) }]
+                  : []),
               ]}
             />
           )}

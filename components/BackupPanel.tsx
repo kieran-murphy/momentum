@@ -21,7 +21,9 @@ export function BackupPanel() {
     reader.onload = () => {
       try {
         const backup = parseBackup(String(reader.result));
-        const summary = `${backup.tasks.length} task${backup.tasks.length === 1 ? "" : "s"} and ${backup.habits.length} habit${backup.habits.length === 1 ? "" : "s"}`;
+        const taskCount = backup.tasks.filter((t) => !t.deletedAt).length;
+        const habitCount = backup.habits.filter((h) => !h.deletedAt).length;
+        const summary = `${taskCount} task${taskCount === 1 ? "" : "s"} and ${habitCount} habit${habitCount === 1 ? "" : "s"}`;
         if (!window.confirm(`Import ${summary}? This replaces everything currently stored on this device.`)) return;
         applyBackup(backup);
         window.location.reload();

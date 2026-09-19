@@ -22,7 +22,7 @@ export default function HabitsPage() {
     const habit = habits.find((h) => h.id === id);
     const hasHistory = (habit?.completions.length ?? 0) > 0;
     const message = hasHistory
-      ? `Delete "${habit?.name}"? Its whole streak and history will be lost. This can't be undone.`
+      ? `Delete "${habit?.name}"? It'll be removed from your habits, but its past completions stay in Recap.`
       : `Delete "${habit?.name}"? This can't be undone.`;
     if (!window.confirm(message)) return;
     deleteHabit(id);

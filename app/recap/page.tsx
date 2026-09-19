@@ -7,8 +7,8 @@ import { useHabitStore } from "@/lib/useHabitStore";
 import { recapStats } from "@/lib/recap";
 
 export default function RecapPage() {
-  const { tasks, groups, hydrated: tasksHydrated } = useTaskStore();
-  const { habits, hydrated: habitsHydrated } = useHabitStore();
+  const { allTasks: tasks, groups, hydrated: tasksHydrated } = useTaskStore();
+  const { allHabits: habits, hydrated: habitsHydrated } = useHabitStore();
 
   if (!tasksHydrated || !habitsHydrated) {
     return <div className="font-body text-sm text-muted">Loading…</div>;

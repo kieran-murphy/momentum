@@ -12,6 +12,9 @@ export type Task = {
   createdAt: string; // ISO
   completedAt: string | null; // ISO or null
   order: number; // manual sort position within its group; lower shows first
+  // Set when a completed task is deleted. The record is kept (hidden from the
+  // task list) so its completion stays in Recap history.
+  deletedAt?: string | null; // ISO
 };
 
 export type Habit = {
@@ -20,6 +23,9 @@ export type Habit = {
   color: string; // hex
   createdAt: string; // ISO
   completions: string[]; // day keys ("YYYY-MM-DD") marked done
+  // Set when a habit with history is deleted. The record is kept (hidden from
+  // the habits page) so its completions stay in Recap history.
+  deletedAt?: string | null; // ISO
 };
 
 export const DEFAULT_GROUPS: Group[] = [

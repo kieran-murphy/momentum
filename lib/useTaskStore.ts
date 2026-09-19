@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { ACCENT_PALETTE, DEFAULT_GROUPS, Group, Task } from "./types";
 import { readLocal, writeLocal } from "./storage";
 import { generateId } from "./id";
@@ -34,7 +34,9 @@ function dedupeGroupColors(groups: Group[]): Group[] {
 
 export function useTaskStore() {
   const [dataSource, setDataSource] = useDataSource();
-  const [tasks, setTasks] = useState<Task[]>([]);
+  // Includes soft-deleted tasks so their completions keep counting in Recap.
+  const [allTasks, setTasks] = useState<Task[]>([]);
+  const tasks = useMemo(() => allTasks.filter((t) => !t.deletedAt), [allTasks]);
   const [groups, setGroups] = useState<Group[]>(DEFAULT_GROUPS);
   const [hydrated, setHydrated] = useState(false);
 
@@ -52,8 +54,8 @@ export function useTaskStore() {
   // Demo data is a sandbox: edits only ever live in memory, so switching
   // back to "local" always restores your real data untouched.
   useEffect(() => {
-    if (hydrated && dataSource === "local") writeLocal(TASKS_KEY, tasks);
-  }, [tasks, hydrated, dataSource]);
+    if (hydrated && dataSource === "local") writeLocal(TASKS_KEY, allTasks);
+  }, [allTasks, hydrated, dataSource]);
 
   useEffect(() => {
     if (hydrated && dataSource === "local") writeLocal(GROUPS_KEY, groups);
@@ -94,8 +96,16 @@ export function useTaskStore() {
     );
   }, []);
 
+  // A completed task is kept as a hidden record so Recap history is
+  // permanent; one that was never completed has nothing to preserve.
   const deleteTask = useCallback((id: string) => {
-    setTasks((prev) => prev.filter((t) => t.id !== id));
+    setTasks((prev) =>
+      prev.flatMap((t) => {
+        if (t.id !== id) return [t];
+        if (!t.completedAt) return [];
+        return [{ ...t, deletedAt: new Date().toISOString() }];
+      })
+    );
   }, []);
 
   // Applies a new manual order to a set of tasks (e.g. after a drag-and-drop
@@ -153,6 +163,7 @@ export function useTaskStore() {
 
   return {
     tasks,
+    allTasks,
     groups,
     hydrated,
     dataSource,

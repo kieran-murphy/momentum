@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { ACCENT_PALETTE, Habit } from "./types";
 import { readLocal, writeLocal } from "./storage";
 import { useDataSource } from "./dataSource";
@@ -10,7 +10,9 @@ const HABITS_KEY = "todo.habits.v1";
 
 export function useHabitStore() {
   const [dataSource, setDataSource] = useDataSource();
-  const [habits, setHabits] = useState<Habit[]>([]);
+  // Includes soft-deleted habits so their completions keep counting in Recap.
+  const [allHabits, setHabits] = useState<Habit[]>([]);
+  const habits = useMemo(() => allHabits.filter((h) => !h.deletedAt), [allHabits]);
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
@@ -19,8 +21,8 @@ export function useHabitStore() {
   }, [dataSource]);
 
   useEffect(() => {
-    if (hydrated && dataSource === "local") writeLocal(HABITS_KEY, habits);
-  }, [habits, hydrated, dataSource]);
+    if (hydrated && dataSource === "local") writeLocal(HABITS_KEY, allHabits);
+  }, [allHabits, hydrated, dataSource]);
 
   const addHabit = useCallback((name: string, color?: string) => {
     const trimmed = name.trim();
@@ -40,8 +42,16 @@ export function useHabitStore() {
     setHabits((prev) => prev.map((h) => (h.id === id ? { ...h, name: trimmed } : h)));
   }, []);
 
+  // A habit with completions is kept as a hidden record so Recap history is
+  // permanent; one that was never completed has nothing to preserve.
   const deleteHabit = useCallback((id: string) => {
-    setHabits((prev) => prev.filter((h) => h.id !== id));
+    setHabits((prev) =>
+      prev.flatMap((h) => {
+        if (h.id !== id) return [h];
+        if (h.completions.length === 0) return [];
+        return [{ ...h, deletedAt: new Date().toISOString() }];
+      })
+    );
   }, []);
 
   const toggleCompletion = useCallback((id: string, key: string) => {
@@ -57,5 +67,5 @@ export function useHabitStore() {
     );
   }, []);
 
-  return { habits, hydrated, dataSource, setDataSource, addHabit, updateHabitName, deleteHabit, toggleCompletion };
+  return { habits, allHabits, hydrated, dataSource, setDataSource, addHabit, updateHabitName, deleteHabit, toggleCompletion };
 }
