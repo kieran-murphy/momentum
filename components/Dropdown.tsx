@@ -2,7 +2,7 @@
 
 import { Fragment, useEffect, useRef, useState } from "react";
 
-export type DropdownOption = { value: string; label: string; color?: string };
+export type DropdownOption = { value: string; label: string; color?: string; hideLabel?: boolean };
 export type DropdownSection = { label?: string; options: DropdownOption[] };
 
 export default function Dropdown({
@@ -69,9 +69,9 @@ export default function Dropdown({
         className="flex items-center gap-2 rounded-lg border border-line bg-paper py-1.5 pl-3 pr-2.5 font-body text-base text-ink transition-colors hover:border-ink/20 focus:outline-none dark:border-line dark:bg-paper dark:text-ink"
       >
         {current?.color && (
-          <span aria-hidden="true" className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: current.color }} />
+          <span aria-hidden="true" className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: current.color }} />
         )}
-        <span className="truncate">{current?.label ?? value}</span>
+        <span className={current?.hideLabel ? "sr-only" : "truncate"}>{current?.label ?? value}</span>
         <svg
           aria-hidden="true"
           viewBox="0 0 20 20"
@@ -132,11 +132,11 @@ export default function Dropdown({
                       {option.color && (
                         <span
                           aria-hidden="true"
-                          className="h-2.5 w-2.5 shrink-0 rounded-full"
+                          className="h-3 w-3 shrink-0 rounded-full"
                           style={{ backgroundColor: option.color }}
                         />
                       )}
-                      <span className="truncate">{option.label}</span>
+                      <span className={option.hideLabel ? "sr-only" : "truncate"}>{option.label}</span>
                     </button>
                   </li>
                 );

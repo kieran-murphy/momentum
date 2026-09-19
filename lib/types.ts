@@ -32,13 +32,11 @@ export const DEFAULT_GROUPS: Group[] = [
 const ACCENT_COLORS: { hex: string; name: string }[] = [
   { hex: "#A6613C", name: "Terracotta" },
   { hex: "#B0793F", name: "Ochre" },
-  { hex: "#C08A52", name: "Clay" },
   { hex: "#8C9B4F", name: "Olive" },
   { hex: "#4F7F6F", name: "Pine" },
   { hex: "#4B8C82", name: "Jade" },
   { hex: "#4B7B8C", name: "Teal" },
   { hex: "#5B6FA6", name: "Slate" },
-  { hex: "#6B5FA6", name: "Indigo" },
   { hex: "#8A5FA6", name: "Purple" },
   { hex: "#A65B7A", name: "Mauve" },
   { hex: "#A65B5B", name: "Wine" },

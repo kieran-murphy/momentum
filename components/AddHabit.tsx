@@ -9,13 +9,16 @@ export default function AddHabit({ habits, onAdd }: { habits: Habit[]; onAdd: (n
   const [isFocused, setIsFocused] = useState(false);
   const [colorOverride, setColorOverride] = useState<string | null>(null);
 
-  // Suggests the first palette color no existing habit is already using, so
-  // new habits default to standing out from the ones already in the list.
-  const suggestedColor = useMemo(() => {
+  // A color already worn by an existing habit is off the table until that
+  // habit is deleted and frees it back up — unless every color is taken, in
+  // which case the picker falls back to the full palette rather than being empty.
+  const availableColors = useMemo(() => {
     const used = new Set(habits.map((h) => h.color));
-    return ACCENT_PALETTE.find((c) => !used.has(c)) ?? ACCENT_PALETTE[habits.length % ACCENT_PALETTE.length];
+    const unused = ACCENT_PALETTE.filter((c) => !used.has(c));
+    return unused.length > 0 ? unused : ACCENT_PALETTE;
   }, [habits]);
-  const color = colorOverride ?? suggestedColor;
+  const suggestedColor = availableColors[0];
+  const color = colorOverride && availableColors.includes(colorOverride) ? colorOverride : suggestedColor;
 
   function submit() {
     if (!name.trim()) return;
@@ -37,7 +40,7 @@ export default function AddHabit({ habits, onAdd }: { habits: Habit[]; onAdd: (n
         className="shrink-0"
         sections={[
           {
-            options: ACCENT_PALETTE.map((c) => ({ value: c, label: ACCENT_PALETTE_NAMES[c], color: c })),
+            options: availableColors.map((c) => ({ value: c, label: ACCENT_PALETTE_NAMES[c], color: c, hideLabel: true })),
           },
         ]}
       />
